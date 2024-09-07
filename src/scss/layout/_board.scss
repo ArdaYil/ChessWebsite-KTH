@@ -1,0 +1,28 @@
+
+
+.board {
+    $size: 6em;
+
+    width: fit-content;
+    display: grid;
+    grid-template-columns: repeat(8, $size);
+    grid-template-rows: repeat(8, $size);
+}
+
+.light {
+    background-color: rgb(212, 184, 130);
+}
+
+.dark {
+    background-color: rgb(141, 64, 28);
+}
+
+.square {
+    user-select: none;
+    cursor: pointer;
+    padding: 0.7em;
+
+    img {
+        width: 100%;
+    }
+}
