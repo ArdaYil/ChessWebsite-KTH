@@ -1,12 +1,13 @@
 
 
-.board {
-    $size: 6em;
+$square-size: 4em;
 
-    width: fit-content;
+.board {
     display: grid;
-    grid-template-columns: repeat(8, $size);
-    grid-template-rows: repeat(8, $size);
+    grid-template-columns: repeat(8, $square-size);
+    grid-template-rows: repeat(8, $square-size);
+    width: 8 * $square-size;
+    height: 8 * $square-size;
 }
 
 .light {
@@ -18,9 +19,11 @@
 }
 
 .square {
+    width: $square-size;
+    height: $square-size;
+    
     user-select: none;
     cursor: pointer;
-    padding: 0.7em;
 
     img {
         width: 100%;
