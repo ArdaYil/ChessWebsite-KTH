@@ -2,14 +2,34 @@ import { useEffect, useRef, useState } from "react";
 
 const App = () => {
   const [FEN, setFEN] = useState(
-    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R"
   );
+
+  const [legalMoves, setLegalMoves] = useState<number[][]>([]);
+  const [grabbed, setGrabbed] = useState<string>("");
 
   const [currentPiece, setCurrentPiece] = useState<HTMLImageElement | null>(
     null
   );
 
   const boardRef = useRef<HTMLDivElement>(null);
+
+  const readStream = async (stream: ReadableStream) => {
+    const reader: ReadableStreamDefaultReader = stream.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    while (true) {
+      const { done, value }: ReadableStreamReadResult<Uint8Array> =
+        await reader.read();
+
+      if (done) {
+        console.log("Stream is done reading.");
+        break;
+      }
+
+      console.log("Received chunk: ", decoder.decode(value));
+    }
+  };
 
   const getIcon = (char: string) => {
     switch (char) {
@@ -87,10 +107,19 @@ const App = () => {
       const file = boardArray[fileIndex];
 
       for (let rankIndex in file) {
-        const color =
+        let color =
           (parseInt(fileIndex) + parseInt(rankIndex)) % 2 === 0
             ? "light"
             : "dark";
+
+        if (grabbed) {
+          for (let legalMove of legalMoves[grabbed as any] as any) {
+            if (legalMove[0] == fileIndex && legalMove[1] == rankIndex) {
+              color = "move";
+              break;
+            }
+          }
+        }
 
         board.push(
           <div
@@ -103,6 +132,7 @@ const App = () => {
                 draggable="false"
                 className={`piece ${boardArray[fileIndex][rankIndex]}`}
                 src={getIcon(boardArray[fileIndex][rankIndex])}
+                id={`${fileIndex}:${rankIndex}`}
               />
             )}
           </div>
@@ -167,6 +197,8 @@ const App = () => {
       element.style.top = `${e.clientY - 25}px`;
       element.style.width = `75px`;
       element.style.height = `$75px`;
+
+      setGrabbed(element.id);
 
       setCurrentPiece(element as HTMLImageElement);
     }
@@ -238,6 +270,29 @@ const App = () => {
     document.addEventListener("mousemove", movePiece);
     document.addEventListener("mouseup", placePiece);
     document.addEventListener("mousedown", grabPiece);
+
+    const requestBody = JSON.stringify({ board: FEN.trim() });
+    console.log("Request Body:", requestBody); // Log the JSON
+
+    fetch("http://127.0.0.1:7878", {
+      method: "POST",
+      body: requestBody,
+      headers: {
+        "Content-Type": "application/json", // Change to application/json
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json(); // Parse as JSON
+      })
+      .then((data) => {
+        setLegalMoves(data.message); // Access the message from the JSON response
+      })
+      .catch((error) => {
+        console.error("Error fetching data from Rust server:", error);
+      });
 
     return () => {
       document.removeEventListener("mousemove", movePiece);

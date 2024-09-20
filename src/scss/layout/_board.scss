@@ -18,6 +18,10 @@ $square-size: 4em;
     background-color: rgb(141, 64, 28);
 }
 
+.move {
+    background-color: red;
+}
+
 .square {
     width: $square-size;
     height: $square-size;
